@@ -35,12 +35,13 @@ public class BaseWebSocketServer extends WebSocketServer {
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
         // handle close
-
+        MLog.d(TAG,"onClose = "+conn);
     }
 
     @Override
     public void onMessage(WebSocket conn, String message) {
         try {
+            MLog.d(TAG,"onMessage = "+message);
             JSONObject jsonObject =new JSONObject(message);
             String registerName = jsonObject.getString("registerName");
             int index = jsonObject.getInt("index");
