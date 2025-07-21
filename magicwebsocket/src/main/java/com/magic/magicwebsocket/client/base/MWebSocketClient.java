@@ -81,6 +81,7 @@ public class MWebSocketClient  {
             @Override
             public void onClosed(@NonNull WebSocket webSocket, int code, @NonNull String reason) {
                 super.onClosed(webSocket, code, reason);
+                MLog.d(TAG, "WebSocket onClosed"+webSocket);
             }
 
             @Override
