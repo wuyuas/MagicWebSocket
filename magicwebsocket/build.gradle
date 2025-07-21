@@ -1,0 +1,47 @@
+plugins {
+    alias(libs.plugins.android.library)
+//    alias(libs.plugins.shadow)
+}
+//tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+//    archiveClassifier.set("")
+//    relocate("org.java_websocket", "com.example.relocated.websocket")
+//}
+//
+
+
+android {
+    namespace 'com.magic.magicwebsocket'
+    compileSdk 35
+
+    defaultConfig {
+        minSdk 24
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+
+
+dependencies {
+
+    implementation libs.appcompat
+    implementation libs.material
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+//    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3' //1.7.25
+}
