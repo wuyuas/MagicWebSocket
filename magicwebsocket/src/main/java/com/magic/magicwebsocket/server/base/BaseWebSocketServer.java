@@ -103,7 +103,11 @@ public class BaseWebSocketServer extends WebSocketServer {
     public void send(String registerName,String message) {
         // 向所有连接的客户端广播消息
         WebSocket webSocket = m_hashMap.get(registerName);
-        if (webSocket!=null&&webSocket.isOpen()){
+        if(webSocket==null||webSocket.isClosed()){
+            m_hashMap.remove(registerName);
+            return;
+        }
+        if (webSocket.isOpen()){
             webSocket.send(message);
         }
     }

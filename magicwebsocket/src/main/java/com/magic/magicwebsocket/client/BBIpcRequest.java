@@ -210,7 +210,7 @@ public class BBIpcRequest {
                     }
                 }
                 //发送超时异常
-                callback.onFailure(new IOException("超时了"));
+                callback.onFailure(new IOException("超时了："+i));
                 MWebSocketClient.webSocketClient[webSocketClient_index].removeSend(m_sessionId);
             }
 

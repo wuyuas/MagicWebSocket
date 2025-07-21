@@ -51,7 +51,11 @@ public class MainActivity extends AppCompatActivity {
 //                    String execute = m_bbIpcRequest1.execute("客户端2","客户端2-you-pkg", "123123", 30);
 //                    Log.d(TAG, "客户端1 收到的数据: "+execute);
 
-                    m_bbIpcRequest1.enqueue("客户端2", "客户端2-you-pkg", "123123", 3, new Callback() {
+                    m_bbIpcRequest1.enqueue(
+                            "客户端2",
+                            "客户端2-you-pkg",
+                            "123123",
+                            3, new Callback() {
                         @Override
                         public void onFailure(IOException ioException) {
                             super.onFailure(ioException);
