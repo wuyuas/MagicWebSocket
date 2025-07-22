@@ -26,8 +26,6 @@ public class BBIpcRequest {
     //某个事务下->某个任务的唯一表示
     private  String m_sessionId= UUID.randomUUID().toString();
     public String m_data;
-    public int m_index = WBIndex.IPC_INDEX_A_TO_SERVER;
-//    private WebSocketClient m_webSocketClient =WebSocketClient.getInstance();
     public int m_port = 0;
     private String m_registerName="";
     public  int webSocketClient_index=0;
@@ -84,12 +82,7 @@ public class BBIpcRequest {
             }
         }
     }
-    /*
-        在 本地服务端 中的注册进程名
-        作用：用于 其他客户端 通过已注册的进程名进行发送
-        备注：仅限两个都要进行注册，才能进行
-            如果有一个没有注册，还是会使用全局广播，就是所有已连接的客户端都会收到消息
-     */
+
     public boolean register(){
         final Boolean[] result = {null};
         sendTarget("","", "", 30,WBIndex.IPC_INDEX_Register, new Callback() {
@@ -177,7 +170,6 @@ public class BBIpcRequest {
     }
 
 
-    //作为发送者:发送数据的方法
     public void enqueue(String target,
                         String data,
                         int timeout,
