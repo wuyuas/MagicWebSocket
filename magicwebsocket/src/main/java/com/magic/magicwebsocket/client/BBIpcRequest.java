@@ -1,6 +1,6 @@
 package com.magic.magicwebsocket.client;
 
-import static com.magic.magicwebsocket.client.base.MWebSocketClient.webSocketClient_index;
+
 
 import android.text.TextUtils;
 import android.util.Log;
@@ -30,6 +30,7 @@ public class BBIpcRequest {
 //    private WebSocketClient m_webSocketClient =WebSocketClient.getInstance();
     public int m_port = 0;
     private String m_registerName="";
+    public  int webSocketClient_index=0;
 
     public BBIpcRequest(String pkg,String processName,int port){
         m_pkg=pkg;
@@ -82,10 +83,10 @@ public class BBIpcRequest {
             }
         }
     }
-    public boolean register(String registerName){
+    public boolean register(){
         final Boolean[] result = {null};
 //        m_registerName=registerName;
-        sendTarget(registerName,"", registerName, 30,WBIndex.IPC_INDEX_Register, new Callback() {
+        sendTarget("","", "", 30,WBIndex.IPC_INDEX_Register, new Callback() {
             @Override
             public void onFailure(IOException ioException) {
                 super.onFailure(ioException);
@@ -110,13 +111,13 @@ public class BBIpcRequest {
         return execute("",target,data,timeout);
     }
 
-    public String execute(String registerName,
+    public String execute(String objProcessName,
                          String target,
                           String data,
                           int timeout) throws IOException {
         final String[] result = {null};
         final IOException[] myioException = {null};
-        sendTarget(registerName,target, data, timeout,WBIndex.IPC_INDEX_A_TO_SERVER, new Callback() {
+        sendTarget(objProcessName,target, data, timeout,WBIndex.IPC_INDEX_A_TO_SERVER, new Callback() {
             @Override
             public void onFailure(IOException ioException) {
                 super.onFailure(ioException);
@@ -146,7 +147,7 @@ public class BBIpcRequest {
                         Callback callback) throws IOException {
         enqueue("",target,data,timeout,callback);
     }
-    public void enqueue(String registerName,
+    public void enqueue(String objProcessName,
                         String target,
                            String data,
                            int timeout,
@@ -159,13 +160,13 @@ public class BBIpcRequest {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                sendTarget(registerName,target,data,timeout,WBIndex.IPC_INDEX_A_TO_SERVER,callback);
+                sendTarget(objProcessName,target,data,timeout,WBIndex.IPC_INDEX_A_TO_SERVER,callback);
             }
         }).start();
 
     }
 
-    private void sendTarget(String registerName,
+    private void sendTarget(String objProcessName,
                             String target,
                             String data,
                             int timeout,
@@ -181,7 +182,7 @@ public class BBIpcRequest {
             jsonObject.put("target",target);
             jsonObject.put("index",index);
             jsonObject.put("sessionId",m_sessionId);
-            jsonObject.put("registerName",registerName);
+            jsonObject.put("objProcessName",objProcessName);
             MWebSocketClient.webSocketClient[webSocketClient_index].addSend(m_sessionId);
 //            MWebSocketClient.webSocketClient.connect(m_port);
             //判断连接
@@ -200,6 +201,7 @@ public class BBIpcRequest {
                 int i = 0;
                 for ( i = 0; i < count; i++) {
                     Thread.sleep(10);
+//                    MLog.d(TAG,"等待："+webSocketClient_index+"  "+MWebSocketClient.webSocketClient[webSocketClient_index].m_send_arr.size());
                     synchronized (MWebSocketClient.webSocketClient[webSocketClient_index].m_send_arr){
                         String s = MWebSocketClient.webSocketClient[webSocketClient_index].m_send_arr.get(m_sessionId);
                         if (!TextUtils.isEmpty(s)){
@@ -209,9 +211,10 @@ public class BBIpcRequest {
                         }
                     }
                 }
-                //发送超时异常
-                callback.onFailure(new IOException("超时了："+i));
                 MWebSocketClient.webSocketClient[webSocketClient_index].removeSend(m_sessionId);
+                //发送超时异常
+                callback.onFailure(new IOException("链接超时\r\n"+Log.getStackTraceString(new Throwable())));
+
             }
 
         } catch (JSONException e) {

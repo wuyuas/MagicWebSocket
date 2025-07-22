@@ -44,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if(m_bbIpcRequest1==null){
-                    m_bbIpcRequest1 =new BBIpcRequest("客户端1","123",9999);
-                    m_bbIpcRequest1.register("客户端1");
+                    m_bbIpcRequest1 =new BBIpcRequest("com.pkg1","客户端1",9999);
+                    m_bbIpcRequest1.register();
                 }
                 try {
 //                    String execute = m_bbIpcRequest1.execute("客户端2","客户端2-you-pkg", "123123", 30);
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                             "客户端2",
                             "客户端2-you-pkg",
                             "123123",
-                            3, new Callback() {
+                            5, new Callback() {
                         @Override
                         public void onFailure(IOException ioException) {
                             super.onFailure(ioException);
@@ -80,10 +80,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void kehuduan_2(View view) {
-        BBIpcRequest bbIpcRequest1 =new BBIpcRequest("客户端2","123",9999,1);
+        BBIpcRequest bbIpcRequest1 =new BBIpcRequest("com.pkg2","客户端2",9999,1);
         String execute = null;
         try {
-            boolean is_register = bbIpcRequest1.register("客户端2");
+            boolean is_register = bbIpcRequest1.register();
 
             bbIpcRequest1.addHandlerForTarget("客户端2-you-pkg", new TargetCallback() {
                 @Override

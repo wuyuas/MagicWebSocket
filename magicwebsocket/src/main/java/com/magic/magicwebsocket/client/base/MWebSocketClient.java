@@ -29,7 +29,7 @@ public class MWebSocketClient  {
             new MWebSocketClient(),
             new MWebSocketClient()
     };
-    public static int webSocketClient_index=0;
+
 
     private OkHttpClient client;
     private WebSocket webSocket;
@@ -128,6 +128,7 @@ public class MWebSocketClient  {
                         synchronized (m_send_arr){
                             if(!m_send_arr.containsKey(sessionId))return;
                             m_send_arr.put(sessionId,data);
+                            MLog.d(TAG,"插入结果："+m_send_arr);
 //                    callback.onResponse(data);
                         }
 
@@ -138,6 +139,7 @@ public class MWebSocketClient  {
                         TargetCallback targetCallback = m_accept_arr.get(target);
                         if (targetCallback==null)return;
                         String s = targetCallback.onRequest(target, pkg, processName, data);
+                        jsonObject.put("objProcessName",processName);
                         jsonObject.put("data",s);
                         jsonObject.put("index",WBIndex.IPC_INDEX_B_TO_SERVER);
                         sendMessage(jsonObject.toString());

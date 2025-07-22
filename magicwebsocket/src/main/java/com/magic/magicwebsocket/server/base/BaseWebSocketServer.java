@@ -43,25 +43,26 @@ public class BaseWebSocketServer extends WebSocketServer {
         try {
             MLog.d(TAG,"onMessage = "+message);
             JSONObject jsonObject =new JSONObject(message);
-            String registerName = jsonObject.getString("registerName");
+            String processName = jsonObject.optString("processName","");
+            String objProcessName = jsonObject.optString("objProcessName","");
             int index = jsonObject.getInt("index");
+
+            //注册
+            if((index==WBIndex.IPC_INDEX_Register)){
+                m_hashMap.put(processName,conn);
+                jsonObject.put("index", WBIndex.IPC_INDEX_Register);
+                jsonObject.put("data","success");
+                send(processName,jsonObject.toString());
+                return;
+            }
+            index = index+1;
+            jsonObject.put("index",index);
             //没有目标名字就全局发送
-            if (TextUtils.isEmpty(registerName)){
-                index = index+1;
-                jsonObject.put("index",index);
+            if (TextUtils.isEmpty(objProcessName)){
                 send(jsonObject.toString());
             }else{
-                if((index==WBIndex.IPC_INDEX_Register)){
-                    m_hashMap.put(registerName,conn);
-                    jsonObject.put("index", WBIndex.IPC_INDEX_Register);
-                    jsonObject.put("data","success");
-                    send(registerName,jsonObject.toString());
-                    return;
-                }
-                index = index+1;
-                jsonObject.put("index",index);
-                if(m_hashMap.containsKey(registerName)){
-                    send(registerName,jsonObject.toString());
+                if(m_hashMap.containsKey(objProcessName)){
+                    send(objProcessName,jsonObject.toString());
                 }else{
                     jsonObject.put("index",WBIndex.IPC_INDEX_Obj_Close);
                     conn.send(jsonObject.toString());
