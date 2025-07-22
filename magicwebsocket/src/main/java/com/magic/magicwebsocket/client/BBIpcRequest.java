@@ -31,6 +31,7 @@ public class BBIpcRequest {
     public int m_port = 0;
     private String m_registerName="";
     public  int webSocketClient_index=0;
+    public boolean m_is_register=false;
 
     public BBIpcRequest(String pkg,String processName,int port){
         m_pkg=pkg;
@@ -83,9 +84,14 @@ public class BBIpcRequest {
             }
         }
     }
+    /*
+        在 本地服务端 中的注册进程名
+        作用：用于 其他客户端 通过已注册的进程名进行发送
+        备注：仅限两个都要进行注册，才能进行
+            如果有一个没有注册，还是会使用全局广播，就是所有已连接的客户端都会收到消息
+     */
     public boolean register(){
         final Boolean[] result = {null};
-//        m_registerName=registerName;
         sendTarget("","", "", 30,WBIndex.IPC_INDEX_Register, new Callback() {
             @Override
             public void onFailure(IOException ioException) {
@@ -98,6 +104,7 @@ public class BBIpcRequest {
                 super.onResponse(Body);
                 synchronized (result){
                     result[0] =true;
+                    m_is_register=true;
                 }
 
             }
@@ -105,6 +112,36 @@ public class BBIpcRequest {
         MLog.d(TAG, "register状态: "+result[0]);
         return result[0];
     }
+    /*
+        卸载注册到 本地服务端 中的进程名
+     */
+    public boolean unRegister(String processName){
+        final Boolean[] result = {null};
+//        m_registerName=registerName;
+        sendTarget(processName,"", "", 30,WBIndex.IPC_INDEX_UnRegister, new Callback() {
+            @Override
+            public void onFailure(IOException ioException) {
+                super.onFailure(ioException);
+                result[0] =false;
+            }
+
+            @Override
+            public void onResponse(String Body) {
+                super.onResponse(Body);
+                synchronized (result){
+                    result[0] =true;
+                    m_is_register=true;
+                }
+
+            }
+        });
+        MLog.d(TAG, "register状态: "+result[0]);
+        return result[0];
+    }
+
+
+
+
     public String execute(String target,
                           String data,
                           int timeout) throws IOException {
@@ -154,7 +191,8 @@ public class BBIpcRequest {
                            Callback callback) throws IOException {
         synchronized (MWebSocketClient.webSocketClient){
             if(!MWebSocketClient.webSocketClient[webSocketClient_index].isconnect()){
-                throw new IOException(new Throwable());
+//                throw new IOException(new Throwable());
+                callback.onFailure(new IOException("没有链接服务器",new Throwable()));
             }
         }
         new Thread(new Runnable() {
@@ -174,6 +212,9 @@ public class BBIpcRequest {
                             Callback callback){
         JSONObject jsonObject =new JSONObject();
         try {
+            if(!m_is_register){
+                objProcessName="";
+            }
             m_sessionId= UUID.randomUUID().toString();
             //组装参数
             jsonObject.put("pkg",m_pkg);
@@ -202,10 +243,16 @@ public class BBIpcRequest {
                 for ( i = 0; i < count; i++) {
                     Thread.sleep(10);
 //                    MLog.d(TAG,"等待："+webSocketClient_index+"  "+MWebSocketClient.webSocketClient[webSocketClient_index].m_send_arr.size());
-                    synchronized (MWebSocketClient.webSocketClient[webSocketClient_index].m_send_arr){
-                        String s = MWebSocketClient.webSocketClient[webSocketClient_index].m_send_arr.get(m_sessionId);
+                    synchronized (MWebSocketClient.webSocketClient[webSocketClient_index].m_send_suc_arr){
+                        String s = MWebSocketClient.webSocketClient[webSocketClient_index].m_send_suc_arr.get(m_sessionId);
                         if (!TextUtils.isEmpty(s)){
                             callback.onResponse(s);
+                            MWebSocketClient.webSocketClient[webSocketClient_index].removeSend(m_sessionId);
+                            return;
+                        }
+                        IOException ioException = MWebSocketClient.webSocketClient[webSocketClient_index].m_send_error_arr.get(m_sessionId);
+                        if(ioException!=null){
+                            callback.onFailure(ioException);
                             MWebSocketClient.webSocketClient[webSocketClient_index].removeSend(m_sessionId);
                             return;
                         }
@@ -213,7 +260,7 @@ public class BBIpcRequest {
                 }
                 MWebSocketClient.webSocketClient[webSocketClient_index].removeSend(m_sessionId);
                 //发送超时异常
-                callback.onFailure(new IOException("链接超时\r\n"+Log.getStackTraceString(new Throwable())));
+                callback.onFailure(new IOException("链接超时",new Throwable()));
 
             }
 

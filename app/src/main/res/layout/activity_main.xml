@@ -41,4 +41,11 @@
         android:text="客户端-2"
         />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="xiezai_1"
+        android:text="卸载客户端"
+        />
+
 </LinearLayout>

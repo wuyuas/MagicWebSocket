@@ -52,9 +52,15 @@ public class BaseWebSocketServer extends WebSocketServer {
                 m_hashMap.put(processName,conn);
                 jsonObject.put("index", WBIndex.IPC_INDEX_Register);
                 jsonObject.put("data","success");
-                send(processName,jsonObject.toString());
+                conn.send(jsonObject.toString());
                 return;
+            }else if(index==WBIndex.IPC_INDEX_UnRegister){
+                m_hashMap.remove(objProcessName);
+                jsonObject.put("index", WBIndex.IPC_INDEX_UnRegister);
+                jsonObject.put("data","success");
+                conn.send(jsonObject.toString());
             }
+
             index = index+1;
             jsonObject.put("index",index);
             //没有目标名字就全局发送
@@ -64,8 +70,9 @@ public class BaseWebSocketServer extends WebSocketServer {
                 if(m_hashMap.containsKey(objProcessName)){
                     send(objProcessName,jsonObject.toString());
                 }else{
-                    jsonObject.put("index",WBIndex.IPC_INDEX_Obj_Close);
-                    conn.send(jsonObject.toString());
+//                    jsonObject.put("index",WBIndex.IPC_INDEX_Obj_Close);
+//                    conn.send(jsonObject.toString());
+                    send(jsonObject.toString());
                 }
             }
 
@@ -116,6 +123,7 @@ public class BaseWebSocketServer extends WebSocketServer {
 
 
     public boolean startServer(){
+        m_is_open_websocket=false;
         boolean result = false;
         new Thread(new Runnable() {
             @Override
@@ -124,7 +132,7 @@ public class BaseWebSocketServer extends WebSocketServer {
                     boolean flag =true;
                     for (int i = 0; i < m_mainthread_sleep; i++) {
                         flag=isPortInUse(9999);
-                        MLog.d(TAG,"主线程 -> 端口被占用-等待 = "+i);
+                        MLog.d(TAG,"WebSocket主线程 -> 端口被占用-等待 = "+i);
                         if(!flag)break;
                         try {
                             Thread.sleep(1000);
@@ -133,18 +141,18 @@ public class BaseWebSocketServer extends WebSocketServer {
                         }
                     }
                     if (flag){
-                        Log.d(TAG,"主线程 -> 确认端口被占用");
+                        MLog.d(TAG,"WebSocket主线程 -> 确认端口被占用");
                         return;
                     }
                     start();
-//                    Log.d(TAG, "启动成功");
+                    MLog.d(TAG, "WebSocket主线程 -> 启动成功");
                 }catch (Exception e){
-                    Log.d(TAG,"WebSocket -> mystart异常 ：",e);
+                    MLog.d(TAG,"WebSocket主线程 -> 异常 ：",e);
                     if(e.toString().contains("can only be started once")){
                         try {
                             stop();
                         } catch (InterruptedException ex) {
-                            Log.d(TAG,"WebSocket -> mystart异常2 ：",e);
+                            MLog.d(TAG,"WebSocket主线程 -> 异常2 ：",e);
                         }
                     }
                 }
@@ -186,7 +194,7 @@ public class BaseWebSocketServer extends WebSocketServer {
                     stop();
                     result[0] = true;
                 } catch (InterruptedException e) {
-                    Log.d(TAG, "WebSocket -> mystop异常 : ",e);
+                    MLog.d(TAG, "WebSocket -> mystop异常 : ",e);
                 }
             }
         }).start();

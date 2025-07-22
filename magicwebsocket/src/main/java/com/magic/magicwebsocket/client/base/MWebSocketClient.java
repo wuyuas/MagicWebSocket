@@ -12,6 +12,7 @@ import com.magic.magicwebsocket.data.WBIndex;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import okhttp3.OkHttpClient;
@@ -37,7 +38,8 @@ public class MWebSocketClient  {
     public Boolean is_connect=Boolean.FALSE;
     private Throwable throwable=null;
     public final HashMap<String,TargetCallback> m_accept_arr =new HashMap<>();
-    public final HashMap<String,String> m_send_arr =new HashMap<>();
+    public final HashMap<String,String> m_send_suc_arr =new HashMap<>();
+    public final HashMap<String,IOException> m_send_error_arr =new HashMap<>();
 
     private static final String TAG = "Magic-MyClient";
     /*
@@ -56,10 +58,13 @@ public class MWebSocketClient  {
 
     //发送者异步回调添加
     public void addSend(String sessionId){
-        m_send_arr.put(sessionId,"");
+        m_send_suc_arr.put(sessionId,"");
+        m_send_error_arr.put(sessionId,null);
+
     }
     public void removeSend(String sessionId){
-        m_send_arr.remove(sessionId);
+        m_send_suc_arr.remove(sessionId);
+        m_send_error_arr.remove(sessionId);
     }
 
 
@@ -101,7 +106,7 @@ public class MWebSocketClient  {
                     is_connect=Boolean.FALSE;
                     throwable=t;
 //        webSocketClient.close();
-                    Log.d(TAG, "WebSocket Error", t);
+                    MLog.d(TAG, "WebSocket Error", t);
                 }
 
             }
@@ -119,16 +124,17 @@ public class MWebSocketClient  {
                     JSONObject jsonObject = new JSONObject(text);
                     String pkg = jsonObject.getString("pkg");
                     String processName = jsonObject.getString("processName");
+                    String objProcessName = jsonObject.getString("objProcessName");
                     String target = jsonObject.getString("target");
                     String data = jsonObject.getString("data");
                     int index = jsonObject.getInt("index");
                     String sessionId = jsonObject.getString("sessionId");
                     //作为发送者:需要处理4
                     if (index == WBIndex.IPC_INDEX_SERVER_TO_A){
-                        synchronized (m_send_arr){
-                            if(!m_send_arr.containsKey(sessionId))return;
-                            m_send_arr.put(sessionId,data);
-                            MLog.d(TAG,"插入结果："+m_send_arr);
+                        synchronized (m_send_suc_arr){
+                            if(!m_send_suc_arr.containsKey(sessionId))return;
+                            m_send_suc_arr.put(sessionId,data);
+                            MLog.d(TAG,"插入结果："+ m_send_suc_arr);
 //                    callback.onResponse(data);
                         }
 
@@ -139,24 +145,30 @@ public class MWebSocketClient  {
                         TargetCallback targetCallback = m_accept_arr.get(target);
                         if (targetCallback==null)return;
                         String s = targetCallback.onRequest(target, pkg, processName, data);
-                        jsonObject.put("objProcessName",processName);
+                        if(!TextUtils.isEmpty(objProcessName)){
+                            jsonObject.put("objProcessName",processName);
+                        }
                         jsonObject.put("data",s);
                         jsonObject.put("index",WBIndex.IPC_INDEX_B_TO_SERVER);
                         sendMessage(jsonObject.toString());
                     }
                     //处理 注册
-                    else if(index == WBIndex.IPC_INDEX_Register){
-                        synchronized (m_send_arr){
-                            if(!m_send_arr.containsKey(sessionId))return;
-                            m_send_arr.put(sessionId,"success");
+                    else if((index == WBIndex.IPC_INDEX_Register)
+                    ||(index == WBIndex.IPC_INDEX_UnRegister)
+                    ){
+                        synchronized (m_send_suc_arr){
+                            if(!m_send_suc_arr.containsKey(sessionId))return;
+                            m_send_suc_arr.put(sessionId,"success");
 //                    callback.onResponse(data);
                         }
                     }
                     //处理：目标已经断开连接
                     else if(index == WBIndex.IPC_INDEX_Obj_Close){
-                        synchronized (m_send_arr){
-                            if(!m_send_arr.containsKey(sessionId))return;
-                            m_send_arr.put(sessionId,"disconnect");
+                        synchronized (m_send_error_arr){
+//                            if(!m_send_suc_arr.containsKey(sessionId))return;
+                            m_send_error_arr.put(sessionId,new IOException(
+                                    "disconnect",new Throwable()
+                            ));
                         }
                     }
 
